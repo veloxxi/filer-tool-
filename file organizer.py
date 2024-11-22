@@ -1,22 +1,6 @@
 import os
+import time
 
-# directory = r'D:/Downloads/Victor drive/'
-# files = os.listdir(directory)
-# # print(files)
-
-# folder_name = ['Video', 'Audio', 'document', 'excutable', 'zoom transcript']
-
-# for i in folder_name:
-#     if not os.path.exists(directory + i):
-#         os.makedirs(directory + i)
-#         print(files)
-
-# for file in files:
-#     if ".pdf" in directory and not os.path.exists(directory + "document/"):
-#         os.rename(directory, directory + "document/")
-
-
-# version 2
 
 # the directory containing files
 directory = r'D:/Downloads/Victor drive/'
@@ -30,25 +14,37 @@ folder_name = {
     'Zoom Transcript': ['.vtt', '.srt', '.ics']
 }
 
-print(directory)
+# track processed files
+processed_files = set()
 
-# subfolders if they don't exist
-for folder in folder_name:
-    folder_path = os.path.join(directory, folder)
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
+# function to organize files
+def organize_files():
+    global processed_files
+    current_files = set(os.listdir(directory))
+    new_files = current_files - processed_files # get files not yet sorted
+    for file in new_files:
+        file_path = os.path.join(directory,file)
+        if os.path.isfile(file_path):
+            file_extension = os.path.splitext(file)[1].lower()
+            for folder, extension in folder_name.items():
+                if file_extension in extension:
+                    destination_folder = os.path.join(directory, folder)
+                    destination_path = os.path.join(destination_folder,file)
+                    if not os.path.exists(destination_folder):
+                        os.makedirs(destination_folder)
+                    os.rename(file_path, destination_path)
+                    print(f"moved: {file} -> {folder}")
+                    break
 
-# files sorting to respective folders
-files = os.listdir(directory)
-for file in files:
-    file_path = os.path.join(directory, file)
-    if os.path.isfile(file_path):  # Ensure it's a file
-        file_extension = os.path.splitext(file)[1].lower()
-        for folder, extensions in folder_name.items():
-            if file_extension in extensions:
-                destination = os.path.join(directory, folder, file)
-                os.rename(file_path, destination)
-                print(f"Moved: {file} -> {folder}")
-                break
-            else:
-                print( 'unknown extension' )
+
+    # Update the sorted files set
+    processed_files = current_files
+
+# Polling loop
+try:
+    print(f"Monitoring folder: {directory}")
+    while True:
+        organize_files()
+        time.sleep(5)  # Check every 5 seconds
+except KeyboardInterrupt:
+    print("Stopped monitoring.")
